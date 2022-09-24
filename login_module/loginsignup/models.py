@@ -9,9 +9,9 @@ class users(models.Model):
     email = models.EmailField( max_length = 254 )
     user_type_id = models.SmallIntegerField()
     userid = models.CharField(max_length=30)
-    password = models.CharField(max_length=60)
-    created_at = models.DateField()
-    updated_at = models.DateField()
+    password = models.CharField(max_length=100)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
     is_deleted = models.IntegerField()
     
     

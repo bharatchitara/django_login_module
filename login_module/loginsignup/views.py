@@ -1,4 +1,9 @@
 import email
+import datetime
+from datetime import date
+from django.conf import settings
+import secrets
+import string
 from email import message
 from django.shortcuts import render
 from django.http import JsonResponse,request,HttpResponse
@@ -16,6 +21,7 @@ import json
 def createUser(request):
     
     if request.method == 'POST':
+        
         
         json_data = request.body.decode('utf-8')
         body = json.loads(json_data)
@@ -109,10 +115,14 @@ def createUser(request):
         generatedPassword = ''
         
         if(password)== '':
-            generatedPassword = password_generate
+            generatedPassword = password_generate()
+            # print(generatedPassword)
             password  = make_password(generatedPassword)
+            # print(password)
+            
         else:
             password = make_password(password)
+            # print(password)
             
         
         
@@ -121,10 +131,12 @@ def createUser(request):
         uEmail = body['email']
         uUserTypeid= body['user_type_id']
         uUserid = body['userid']
-        uPassword = body['password']
-        uCreatedAt = body['created_at']
-        uupdatedAt = body['updated_at']
-        uIsDeleted = body['is_deleted']
+        
+        
+        uPassword = password
+        uCreatedAt = datetime.datetime.now()
+        uupdatedAt = datetime.datetime.now()
+        uIsDeleted = 0
         
         
         addNewuser = users(name = uName, mobile = uMobile, email = uEmail, user_type_id =uUserTypeid, userid = uUserid, password = uPassword, 
