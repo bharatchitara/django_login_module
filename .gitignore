@@ -1,0 +1,8 @@
+myenv/
+myenv
+*.pyc
+migrations/
+.vscode
+
+
+
