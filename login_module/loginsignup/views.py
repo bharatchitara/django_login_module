@@ -3,6 +3,7 @@ import datetime
 from datetime import date
 import re
 from textwrap import indent
+from django.core.mail import send_mail
 from django.conf import settings
 from django.core.validators import validate_email
 import secrets
@@ -11,9 +12,8 @@ from email import message
 from django.shortcuts import render
 from django.http import JsonResponse,request,HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-
 from django.contrib.auth.hashers import check_password, make_password
-from loginsignup.models import (users,session)
+from .models import (users,session)
 import django_restframework
 import json
 
