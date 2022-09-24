@@ -1,7 +1,10 @@
 import email
 import datetime
 from datetime import date
+import re
+from textwrap import indent
 from django.conf import settings
+from django.core.validators import validate_email
 import secrets
 import string
 from email import message
@@ -58,6 +61,22 @@ def createUser(request):
             
             return HttpResponse(message ,status=409,content_type="application/json")
         
+        flagValidEmail = 0
+    
+        try:
+            validate_email(email) 
+            flag_valid_email = 1
+        
+        except:
+            message = [
+                
+                {
+                    "success" : "False",
+                    "message" : "Invalid Email used. correct email Format: johndow@example.com" 
+                }
+            ]
+            return HttpResponse(message ,status=302,content_type="application/json")
+        
         
         emptyVar, duplicateVar = (checkDuplicateMobile(request,mobile))
         
@@ -105,7 +124,7 @@ def createUser(request):
                 
                 {
                     "success" : "False",
-                    "message" : "userid already exist. Please use another userid" 
+                    "message" : "userid already taken. Please use another userid" 
                 }
             ]
             
@@ -114,25 +133,38 @@ def createUser(request):
         
         generatedPassword = ''
         
+        copyPassword = password
+        
         if(password)== '':
             generatedPassword = password_generate()
-            # print(generatedPassword)
-            password  = make_password(generatedPassword)
-            # print(password)
+            
+            password = make_password(generatedPassword)
+            
             
         else:
             password = make_password(password)
-            # print(password)
             
         
+        if re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$!%*?&])[A-Za-z\d@#$!%*?&]{8,}$",copyPassword):
+            print(password)
+        else:
+            message = [
+                
+                {
+                    "success" : "False", 
+                    "message" : 'Incorrect Password used. The password should contains Min 8 characters including atleast 1 uppercase,atleast 1 lowercase, atleast 1 number(0-9), atleast 1 special character ( !, @, #, $, %, *)'
+                }
+            ]
+            
+            
+            return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
+            
         
         uName = body['name']
         uMobile = body['mobile']
         uEmail = body['email']
         uUserTypeid= body['user_type_id']
         uUserid = body['userid']
-        
-        
         uPassword = password
         uCreatedAt = datetime.datetime.now()
         uupdatedAt = datetime.datetime.now()
