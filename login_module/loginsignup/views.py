@@ -139,6 +139,8 @@ def createUser(request):
         
         generatedPassword = ''
         
+        copyGeneratedPassword = ''
+        
         copyPassword = password
         
         flagForEmptyPass = 0
@@ -146,6 +148,7 @@ def createUser(request):
         if(password)== '':
             flagForEmptyPass = 1 
             generatedPassword = password_generate()
+            copyGeneratedPassword = generatedPassword
             
             password = make_password(generatedPassword)
             
@@ -153,20 +156,21 @@ def createUser(request):
         else:
             password = make_password(password)
             
+        if(flagForEmptyPass != 1):
         
-        if re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$!%*?&])[A-Za-z\d@#$!%*?&]{8,}$",copyPassword):
-            print(password)
-        else:
-            message = [
+            if re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$!%*?&])[A-Za-z\d@#$!%*?&]{8,}$",copyPassword):
+                print(password)
+            else:
+                message = [
+                    
+                    {
+                        "success" : "False", 
+                        "message" : 'Incorrect Password used. The password should contains Min 8 characters including atleast 1 uppercase,atleast 1 lowercase, atleast 1 number(0-9), atleast 1 special character ( !, @, #, $, %, *)'
+                    }
+                ]
                 
-                {
-                    "success" : "False", 
-                    "message" : 'Incorrect Password used. The password should contains Min 8 characters including atleast 1 uppercase,atleast 1 lowercase, atleast 1 number(0-9), atleast 1 special character ( !, @, #, $, %, *)'
-                }
-            ]
-            
-            
-            return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
+                
+                return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
             
         
         uName = body['name']
@@ -207,7 +211,11 @@ def createUser(request):
             getUID = users.objects.get(email = uEmail)
             
             print(getUID.id)
-            checkFlagForSendMail = sendVerifyMail(request,getUID.id, uEmail, uName)
+            checkFlagForSendMail = sendVerifyMail(request, getUID.id, uEmail, uName)
+            
+            if(flagForEmptyPass == 1):
+                sendGeneratedPassMail(request,copyGeneratedPassword,uEmail) 
+                
             
         
         if(checkFlagForSendMail == 1 ):
@@ -360,3 +368,21 @@ def activate(request, uidb64, token):
     else:
         return HttpResponse('Activation link is invalid!')
     
+    
+def sendGeneratedPassMail(request, generatedPassword, userEmail):
+    mail_subject = 'Activate your account.'
+    message = 'Your Auto Generated Password is:'+generatedPassword
+    
+    print(message)
+    
+    to_email = userEmail
+    
+    email = EmailMessage(
+                mail_subject, message, to=[to_email]
+    )
+
+    try:
+        email.send()
+    
+    except:
+        pass
