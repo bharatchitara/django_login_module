@@ -1,6 +1,7 @@
 import email
 import datetime
 from datetime import date
+from getpass import getuser
 import re
 from textwrap import indent
 from django.core.mail import send_mail
@@ -30,7 +31,6 @@ import json
 def createUser(request):
     
     if request.method == 'POST':
-        
         
         json_data = request.body.decode('utf-8')
         body = json.loads(json_data)
@@ -386,3 +386,149 @@ def sendGeneratedPassMail(request, generatedPassword, userEmail):
     
     except:
         pass
+
+
+
+@csrf_exempt
+def updateUser(request):
+    
+    if request.method == 'POST':
+        
+        json_data = request.body.decode('utf-8')
+        body = json.loads(json_data)
+        
+        uEmail = body['email']
+        uMobile = body['mobile']
+        uUserId = body['userid']
+        
+        emptyVar, duplicateVar = (checkDuplicateEmail(request,uEmail))
+          
+        if(emptyVar == 101):
+            message = [
+                
+                {
+                    "success": "False",
+                    "message" : "email is required"
+                }
+            ]
+            
+            return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
+        
+        elif(duplicateVar == 101):
+            
+            emptyVar, duplicateVar = (checkDuplicateMobile(request,uMobile))
+        
+        
+            if(duplicateVar == 101):
+                
+                message = [
+                    
+                    {
+                        "success" : "False",
+                        "message" : "mobile already exist. Please use another mobile" 
+                    }
+                ]
+                
+                return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
+            
+            
+            emptyVar, duplicateVar = (checkDuplicateUserid(request,uUserId))
+            
+                
+            if(duplicateVar == 101):
+                
+                message = [
+                    
+                    {
+                        "success" : "False",
+                        "message" : "userid already Exist. Please use another userid" 
+                    }
+                ]
+                
+                return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
+        
+        
+        getUser = ''
+        
+        try:
+            getUser = users.objects.get(email = uEmail)
+        
+        except: 
+            message = [
+                    {
+                        "success" : "False",
+                        "message" : "User/Email not exist" 
+                    }
+                ]
+            st_code = 400
+            return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
+         
+       
+        updateUser = getUser
+        
+        for key in body.keys():
+            if(key == 'name'):
+                updateUser.name = body['name']
+            elif(key  == 'mobile'):
+                updateUser.mobile = body['mobile']  
+            elif(key == 'userid'):
+                updateUser.userid = body['userid']
+            elif(key == 'password'):
+                updateUser.password = body['password']
+            elif(key == 'user_type_id'):
+                updateUser.user_type_id = body['user_type_id']
+            elif(key == 'user_type_id'):
+                updateUser.is_deleted = body['is_deleted'] 
+                
+        updateUser.updated_at = datetime.datetime.now()
+    
+            
+        updateSuccess = 0
+        st_code = 0
+        
+        try:
+            updateUser.save()
+            updateSuccess = 1
+        except Exception:
+            print(Exception)
+            print("error")
+            
+        
+        if(updateSuccess == 1 ):
+            
+            message = [
+                    
+                    {
+                        "success" : "True",
+                        "message" : "User updated successfully" 
+                    }
+                ]
+                
+            st_code = 201
+        
+        else:
+            message = [
+                    
+                    {
+                        "success" : "False",
+                        "message" : "User updation failed" 
+                    }
+                ]
+                
+            st_code = 400
+            
+        return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
+         
+            
+            
+
+
+            
+            
+            
+        
+        
+    
+    
+    
+    
