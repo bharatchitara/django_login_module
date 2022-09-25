@@ -7,7 +7,13 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.core.validators import validate_email
 import secrets
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.template.loader import render_to_string
+from .tokens import account_activation_token
 import string
+from django.core.mail import EmailMessage
 from email import message
 from django.shortcuts import render
 from django.http import JsonResponse,request,HttpResponse
@@ -171,7 +177,7 @@ def createUser(request):
         uPassword = password
         uCreatedAt = datetime.datetime.now()
         uupdatedAt = datetime.datetime.now()
-        uIsDeleted = 0
+        uIsDeleted = 1
         
         
         addNewuser = users(name = uName, mobile = uMobile, email = uEmail, user_type_id =uUserTypeid, userid = uUserid, password = uPassword, 
@@ -181,16 +187,8 @@ def createUser(request):
         try:
             addNewuser.save()
             
-            message = [
-                {
-                "success": "True",
-                "message" : "User created successfully"
-                }
-            ]
-            
             stCode= 201
-            
-            
+           
         except:
             message = [
                  {
@@ -200,9 +198,28 @@ def createUser(request):
             ]
 
             stCode= 400
-        
             
-
+        getUID = ''
+        
+        checkFlagForSendMail = 0
+        
+        if(stCode == 201):
+            getUID = users.objects.get(email = uEmail)
+            
+            print(getUID.id)
+            checkFlagForSendMail = sendVerifyMail(request,getUID.id, uEmail, uName)
+            
+        
+        if(checkFlagForSendMail == 1 ):
+            message = [
+                {
+                "success": "True",
+                "message" : "User created successfully. Please verify the email to activate your account."
+                }
+            ]
+            
+            stCode= 201   
+            
     return HttpResponse(json.dumps(message, indent=4) ,status=stCode,content_type="application/json")
 
 
@@ -294,9 +311,52 @@ def password_generate():
             
             
         
-            
+def sendVerifyMail(request,userUid, userEmail, userName):
+    
+    current_site = get_current_site(request)
+    mail_subject = 'Activate your account.'
+    message = render_to_string('acc_active_email.html', {
+                                        'user': userName,
+                                        'domain': current_site.domain,
+                                        'uid':urlsafe_base64_encode(force_bytes(userUid)),
+                                        'token':account_activation_token.make_token(userEmail),
+    })
+    to_email = userEmail
+    
+    email = EmailMessage(
+                mail_subject, message, to=[to_email]
+    )
+
+    passFlagForSendMail = 0
+    
+    try:
+        email.send()
+        passFlagForSendMail =  1 
+    
+    except:
+        passFlagForSendMail = 0
+    
+    return passFlagForSendMail
 
 
     
+def activate(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = users.objects.get(id=uid)
+       
+      
+    except(TypeError, ValueError, OverflowError, user.DoesNotExist):
+        
+        user = None
+        
+    if user is not None and account_activation_token.check_token(user.email, token):
     
+        user.is_deleted=0    #making the user active
+        user.save()
+        
+        
+        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
+    else:
+        return HttpResponse('Activation link is invalid!')
     
