@@ -3,6 +3,6 @@ myenv
 *.pyc
 migrations/
 .vscode
-
+.env
 
 

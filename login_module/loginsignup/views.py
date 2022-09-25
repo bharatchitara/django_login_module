@@ -47,7 +47,7 @@ def createUser(request):
                 }
             ]
             
-            return HttpResponse(message ,status=302,content_type="application/json")
+            return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
         
         elif(duplicateVar == 101):
             
@@ -59,7 +59,7 @@ def createUser(request):
                 }
             ]
             
-            return HttpResponse(message ,status=409,content_type="application/json")
+            return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
         
         flagValidEmail = 0
     
@@ -75,7 +75,7 @@ def createUser(request):
                     "message" : "Invalid Email used. correct email Format: johndow@example.com" 
                 }
             ]
-            return HttpResponse(message ,status=302,content_type="application/json")
+            return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
         
         
         emptyVar, duplicateVar = (checkDuplicateMobile(request,mobile))
@@ -89,7 +89,7 @@ def createUser(request):
                 }
             ]
             
-            return HttpResponse(message ,status=302,content_type="application/json")
+            return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
         
         elif(duplicateVar == 101):
             
@@ -101,7 +101,7 @@ def createUser(request):
                 }
             ]
             
-            return HttpResponse(message ,status=409,content_type="application/json")
+            return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
         
         
         emptyVar, duplicateVar = (checkDuplicateUserid(request,userid))
@@ -116,7 +116,7 @@ def createUser(request):
                 }
             ]
             
-            return HttpResponse(message ,status=302,content_type="application/json")
+            return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
         
         elif(duplicateVar == 101):
             
@@ -128,14 +128,17 @@ def createUser(request):
                 }
             ]
             
-            return HttpResponse(message ,status=409,content_type="application/json")
+            return HttpResponse(json.dumps(message, indent=4) ,status=409,content_type="application/json")
         
         
         generatedPassword = ''
         
         copyPassword = password
         
+        flagForEmptyPass = 0
+        
         if(password)== '':
+            flagForEmptyPass = 1 
             generatedPassword = password_generate()
             
             password = make_password(generatedPassword)
@@ -200,7 +203,7 @@ def createUser(request):
         
             
 
-    return HttpResponse(message ,status=stCode,content_type="application/json")
+    return HttpResponse(json.dumps(message, indent=4) ,status=stCode,content_type="application/json")
 
 
 
