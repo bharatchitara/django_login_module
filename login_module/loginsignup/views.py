@@ -477,7 +477,7 @@ def updateUser(request):
                 updateUser.password = body['password']
             elif(key == 'user_type_id'):
                 updateUser.user_type_id = body['user_type_id']
-            elif(key == 'user_type_id'):
+            elif(key == 'is_deleted'):
                 updateUser.is_deleted = body['is_deleted'] 
                 
         updateUser.updated_at = datetime.datetime.now()
