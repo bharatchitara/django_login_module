@@ -329,6 +329,8 @@ def sendVerifyMail(request,userUid, userEmail, userName):
                                         'uid':urlsafe_base64_encode(force_bytes(userUid)),
                                         'token':account_activation_token.make_token(userEmail),
     })
+    
+    
     to_email = userEmail
     
     email = EmailMessage(
@@ -520,15 +522,3 @@ def updateUser(request):
         return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
          
             
-            
-
-
-            
-            
-            
-        
-        
-    
-    
-    
-    
