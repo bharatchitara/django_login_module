@@ -1,8 +1,10 @@
 import email
 import datetime
 from datetime import date
+from genericpath import exists
 from getpass import getuser
 import re
+from shutil import ExecError
 from textwrap import indent
 from django.core.mail import send_mail
 from django.conf import settings
@@ -399,6 +401,23 @@ def updateUser(request):
         json_data = request.body.decode('utf-8')
         body = json.loads(json_data)
         
+        requiredFields = ['email','mobile','userid']
+         
+        for i in requiredFields: 
+            if i not in body.keys():
+                message = [
+                
+                {
+                    "success": "False",
+                    "message" : "email, mobile and userid are Required Fields. Please add these fields in Json Body."
+                }
+            ]
+            
+                return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
+        
+        
+                
+        
         uEmail = body['email']
         uMobile = body['mobile']
         uUserId = body['userid']
@@ -454,6 +473,7 @@ def updateUser(request):
         
         try:
             getUser = users.objects.get(email = uEmail)
+            
         
         except: 
             message = [
@@ -467,6 +487,9 @@ def updateUser(request):
          
        
         updateUser = getUser
+        copyUpdateUser = updateUser
+        
+        print(updateUser.name,updateUser.created_at,updateUser.updated_at, updateUser.is_deleted,updateUser.user_type_id )
         
         for key in body.keys():
             if(key == 'name'):
@@ -478,23 +501,34 @@ def updateUser(request):
             elif(key == 'password'):
                 updateUser.password = body['password']
             elif(key == 'user_type_id'):
-                updateUser.user_type_id = body['user_type_id']
+                
+                if(body['user_type_id'] == ""):
+                    pass
+                else:
+                    updateUser.user_type_id = body['user_type_id']
+                    
             elif(key == 'is_deleted'):
-                updateUser.is_deleted = body['is_deleted'] 
+                if(body['is_deleted'] == ""):
+                    pass
+                else:
+                    updateUser.is_deleted = body['is_deleted']
+                
                 
         updateUser.updated_at = datetime.datetime.now()
-    
-            
+        
+        print(updateUser.name,updateUser.created_at,updateUser.updated_at, updateUser.is_deleted,updateUser.user_type_id )
+        
+        
         updateSuccess = 0
         st_code = 0
         
         try:
             updateUser.save()
             updateSuccess = 1
-        except Exception:
-            print(Exception)
-            print("error")
             
+        except:
+            print('error')
+        
         
         if(updateSuccess == 1 ):
             
@@ -521,4 +555,90 @@ def updateUser(request):
             
         return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
          
+         
+@csrf_exempt
+def deleteUser(request):
+    
+    if request.method == 'POST':
+        
+        json_data = request.body.decode('utf-8')
+        body = json.loads(json_data)
+        
+        requiredFields = ['email']
+        
+        for i in requiredFields: 
+            if i not in body.keys():
+                message = [
+                
+                {
+                    "success": "False",
+                    "message" : "email is Required Fields. Please add that field in Json Body."
+                }
+            ]
             
+                return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
+        
+        
+        uEmail = body['email']
+        getUser = ''
+        
+        emptyVar, duplicateVar = (checkDuplicateEmail(request,uEmail))
+          
+        if(emptyVar == 101):
+            message = [
+                
+                {
+                    "success": "False",
+                    "message" : "email is required"
+                }
+            ]
+            
+            return HttpResponse(json.dumps(message, indent=4) ,status=302,content_type="application/json")
+        
+        elif(duplicateVar == 101):
+            
+        
+            try:
+                getUser = users.objects.filter(email = uEmail).delete()
+                
+                st_code = 201
+                
+                message = [
+                        {
+                            "success" : "True",
+                            "message" : "User Deleted Successfully." 
+                        }
+                    ]
+
+            
+            except: 
+                message = [
+                        {
+                            "success" : "False",
+                            "message" : "User/ Email not exist" 
+                        }
+                    ]
+                st_code = 400
+            
+        else:
+            message = [
+                        {
+                            "success" : "False",
+                            "message" : "User/ Email not exist" 
+                        }
+                    ]
+            st_code = 400
+            
+                
+        return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
+            
+    else:
+        message = [
+                        {
+                            "success" : "False",
+                            "message" : "Plase use the Post method" 
+                        }
+                    ]
+        st_code = 400
+        return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
+         
