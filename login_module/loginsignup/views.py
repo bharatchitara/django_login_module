@@ -1,8 +1,10 @@
 import email
 import datetime
-from datetime import date
+from datetime import date, timezone
 from genericpath import exists
 from getpass import getuser
+import jwt
+import os
 import re
 from shutil import ExecError
 from textwrap import indent
@@ -499,7 +501,15 @@ def updateUser(request):
             elif(key == 'userid'):
                 updateUser.userid = body['userid']
             elif(key == 'password'):
-                updateUser.password = body['password']
+                
+                if(body['password'] == ""):
+                    pass
+                else:
+                    updateUser.password = body['password']
+                
+                updateUser.password = make_password(updateUser.password) 
+                
+                
             elif(key == 'user_type_id'):
                 
                 if(body['user_type_id'] == ""):
@@ -641,4 +651,135 @@ def deleteUser(request):
                     ]
         st_code = 400
         return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
-         
+    
+    
+@csrf_exempt         
+def login(request):
+    if request.method == 'POST':
+        
+        json_data = request.body.decode('utf-8')
+        body = json.loads(json_data)
+        
+        requiredFields = ['email','password']
+        
+        for i in requiredFields: 
+            if i not in body.keys():
+                message = [
+                
+                {
+                    "success": "False",
+                    "message" : "email and password are Required Fields. Please add those field in Json Body."
+                }
+            ]
+                st_code  = 400
+                return HttpResponse(json.dumps(message, indent=4) ,status=st_code,content_type="application/json")
+        
+        
+        
+        uEmail = body['email']
+        uPassword = body['password']
+        
+        
+        if(uEmail == '' or uPassword == ''):
+            message = [
+                
+                {
+                    "success": "False",
+                    "message" : "email and password cannot be blank"
+                }
+            ]
+            
+            st_code  = 400
+            
+            return HttpResponse(json.dumps(message, indent=4), status=st_code, content_type="application/json")
+        
+        
+        
+        getUser = ''
+        flagForUserExist = 0
+        flagForpasswordMatch = 0
+        
+        try:
+            getUser  = users.objects.get(email = uEmail)
+            flagForUserExist = 1 
+        
+        except:
+            flagForUserExist = 0
+            
+            
+        if(flagForUserExist == 1):
+            if(getUser.is_deleted  == 1 ):   #if is_deleted is 1, then user is not active
+                
+                sendVerifyMail(request, getUser.id, uEmail, getUser.name)
+                message = [
+                
+                    {
+                        "success": "False",
+                        "message" : "The user is not verified. Please use the activation mail send via email to activate your account."
+                    }
+                ]
+            
+                st_code  = 302
+            
+                return HttpResponse(json.dumps(message, indent=4), status=st_code, content_type="application/json")
+            
+            else:
+                passwdFromDB = getUser.password
+                
+                checkHashPassword = check_password(uPassword,passwdFromDB)    #checking the hashed password
+                
+                print(checkHashPassword)
+                
+                if(checkHashPassword):
+                    flagForpasswordMatch = 1
+                else:
+                    flagForpasswordMatch = 0
+                    
+                
+                    
+                if(flagForpasswordMatch == 1 ):
+                    
+                    payload_data = {
+                        "typ": "access",
+                        "exp": datetime.datetime.now(tz=timezone.utc) + datetime.timedelta(days=2),
+                        "id": getUser.id,
+                        "email": getUser.email
+                    }
+                    
+                    jwtSecret = os.environ['JWT_SECRET']
+                    
+                    accessToken = jwt.encode(payload=payload_data, key=jwtSecret )
+                    
+                    print(accessToken)
+                    
+                    message = [
+                
+                    {
+                        "success": "True",
+                        "message" : "Login Successfully.",
+                        "access_token" :  accessToken
+                    }
+                            ]
+            
+                    st_code  = 201
+            
+                    return HttpResponse(json.dumps(message, indent=4), status=st_code, content_type="application/json")
+            
+                    
+                    
+                
+                else: 
+                    message = [
+                
+                    {
+                        "success": "False",
+                        "message" : "Login failed. Email or password is incorrect."
+                    }
+                ]
+            
+                    st_code  = 400
+            
+                    return HttpResponse(json.dumps(message, indent=4), status=st_code, content_type="application/json")
+            
+                    
+        
