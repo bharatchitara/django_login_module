@@ -18,8 +18,8 @@ class users(models.Model):
 class session(models.Model):
     session_id = models.CharField(max_length = 120)
     user_id = models.IntegerField()
-    login_time = models.DateField()
-    logout_time = models.DateField()
+    login_time = models.DateTimeField()
+    logout_time = models.DateTimeField()
     token = models.CharField(max_length=254)
     
 

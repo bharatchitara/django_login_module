@@ -5,6 +5,7 @@ from genericpath import exists
 from getpass import getuser
 import jwt
 import os
+import uuid
 import re
 from shutil import ExecError
 from textwrap import indent
@@ -739,25 +740,46 @@ def login(request):
                     
                 if(flagForpasswordMatch == 1 ):
                     
-                    payload_data = {
+                    access_payload_data = {
                         "typ": "access",
                         "exp": datetime.datetime.now(tz=timezone.utc) + datetime.timedelta(days=2),
                         "id": getUser.id,
                         "email": getUser.email
                     }
                     
-                    jwtSecret = os.environ['JWT_SECRET']
+                    jwtAccessSecret = os.environ['JWT_ACCESS_SECRET']
                     
-                    accessToken = jwt.encode(payload=payload_data, key=jwtSecret )
+                    accessToken = jwt.encode(payload=access_payload_data, key=jwtAccessSecret )
                     
-                    print(accessToken)
+                    
+                    refresh_payload_data = {
+                        "typ": "refresh",
+                        "exp": datetime.datetime.now(tz=timezone.utc) + datetime.timedelta(days=60),
+                        "id": getUser.id,
+                        "email": getUser.email
+                    }
+                    
+                    jwtRefreshSecret = os.environ['JWT_REFRESH_SECRET']
+                    
+                    refreshToken = jwt.encode(payload=refresh_payload_data, key=jwtRefreshSecret )
+                    
+                    
+                    
+                    sessionId = uuid.uuid4()    #creating random sesssion id
+                    
+                    createSession = session(sessionId, getUser.id, datetime.datetime.now(),'', refreshToken)
+                    
+                    
+                    createSession.save()
+                    
                     
                     message = [
                 
                     {
                         "success": "True",
                         "message" : "Login Successfully.",
-                        "access_token" :  accessToken
+                        "access_token" :  accessToken,
+                        "refresh_token":  refreshToken
                     }
                             ]
             
