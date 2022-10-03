@@ -767,11 +767,14 @@ def login(request):
                     
                     sessionId = uuid.uuid4()    #creating random sesssion id
                     
-                    createSession = session(sessionId, getUser.id, datetime.datetime.now(),'', refreshToken)
                     
+                    createSession = session( session_id = sessionId, user_id = getUser.id, login_time = datetime.datetime.now(),token =refreshToken )
                     
-                    createSession.save()
-                    
+                    try:
+                        createSession.save()
+                        flagForSessionEntry = 1 
+                    except:
+                        print("fail")
                     
                     message = [
                 
