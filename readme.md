@@ -1,1 +1,1 @@
-django based login and signup package.
+django based login and signup package
