@@ -3,7 +3,7 @@ name: Test_CI
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   run-command:
