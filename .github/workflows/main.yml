@@ -1,0 +1,27 @@
+name: Test_CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-command:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6  # Specify your desired Python version
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # Adjust based on your project structure
+
+    - name: Run Django Management Command
+      run: python manage.py runserver  # Replace with your actual management command
