@@ -1,7 +1,6 @@
 import email
 import datetime
 from datetime import date, timezone
-from genericpath import exists
 from getpass import getuser
 import jwt
 import os
