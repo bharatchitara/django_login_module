@@ -24,4 +24,4 @@ jobs:
         pip install -r requirements.txt  # Adjust based on your project structure
 
     - name: Run Django Management Command
-      run: python manage.py runserver  # Replace with your actual management command
+      run: python login_module/manage.py runserver  # Replace with your actual management command
